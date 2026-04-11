@@ -60,7 +60,7 @@ def reminder(
         t = threading.Thread(
             target=_reminder_thread,
             args=(delay_seconds, safe_message, "MARK Reminder"),
-            daemon=True
+            daemon=False
         )
         t.start()
 

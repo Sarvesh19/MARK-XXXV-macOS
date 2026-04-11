@@ -1,0 +1,8 @@
+.DS_Store
+__pycache__/
+config/api_keys.json
+desktop/test jarvis/
+memory/
+settings.json
+venv/
+actions/__pycache__/

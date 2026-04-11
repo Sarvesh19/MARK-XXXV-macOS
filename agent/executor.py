@@ -125,7 +125,7 @@ def _inject_context(params: dict, tool: str, step_results: dict, goal: str = "")
 def _detect_language(text: str) -> str:
     import google.generativeai as genai
     genai.configure(api_key=_get_api_key())
-    model = genai.GenerativeModel("gemini-2.5-flash-lite")
+    model = genai.GenerativeModel("gemini-3.1-flash-lite")
     try:
         response = model.generate_content(
             f"What language is this text written in? "
@@ -378,7 +378,7 @@ class AgentExecutor:
         try:
             import google.generativeai as genai
             genai.configure(api_key=_get_api_key())
-            model     = genai.GenerativeModel(model_name="gemini-2.5-flash-lite")
+            model     = genai.GenerativeModel(model_name="gemini-3.1-flash-lite")
             steps_str = "\n".join(f"- {s.get('description', '')}" for s in completed_steps)
             prompt    = (
                 f'User goal: "{goal}"\n'

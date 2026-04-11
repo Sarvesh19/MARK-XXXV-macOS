@@ -1,0 +1,7 @@
+Object-Oriented Programming (OOP) in Java is a paradigm based on the concept of 'objects', which can contain data and code. Key concepts include:
+1. Class: A blueprint for creating objects.
+2. Object: An instance of a class.
+3. Inheritance: A mechanism where one class inherits properties and behavior from another.
+4. Polymorphism: The ability of an object to take on many forms.
+5. Encapsulation: Bundling the data (variables) and methods (functions) that operate on the data into a single unit or class.
+6. Abstraction: Hiding the complex implementation details and showing only the necessary features.

@@ -660,10 +660,13 @@ class JarvisLive:
                 jarvis_speaking = self._is_speaking
             if not jarvis_speaking and not self.ui.muted:
                 data = indata.tobytes()
-                loop.call_soon_threadsafe(
-                    self.out_queue.put_nowait,
-                    {"data": data, "mime_type": "audio/pcm"}
-                )
+                try:
+                    loop.call_soon_threadsafe(
+                        self.out_queue.put_nowait,
+                        {"data": data, "mime_type": "audio/pcm"}
+                    )
+                except Exception:
+                    pass  # queue full — drop chunk silently
 
         try:
             with sd.InputStream(
@@ -743,9 +746,7 @@ class JarvisLive:
 
     async def _play_audio(self):
         print("[JARVIS] 🔊 Play started")
-        loop = asyncio.get_event_loop()
 
-        # Sürekli açık output stream — PyAudio'daki stream.write() davranışıyla aynı
         stream = sd.RawOutputStream(
             samplerate=RECEIVE_SAMPLE_RATE,
             channels=CHANNELS,
@@ -753,16 +754,34 @@ class JarvisLive:
             blocksize=CHUNK_SIZE,
         )
         stream.start()
+        _was_speaking = False
         try:
             while True:
-                chunk = await self.audio_in_queue.get()
-                self.set_speaking(True)
-                await asyncio.to_thread(stream.write, chunk)
+                try:
+                    # Wait 0.4 s for a chunk; if none arrives, the burst is over
+                    chunk = await asyncio.wait_for(self.audio_in_queue.get(), timeout=0.4)
+                    if not _was_speaking:
+                        self.ui.set_state("SPEAKING")
+                        with self._speaking_lock:
+                            self._is_speaking = True
+                        _was_speaking = True
+                    await asyncio.to_thread(stream.write, chunk)
+                except asyncio.TimeoutError:
+                    # No audio chunk — playback burst finished
+                    if _was_speaking:
+                        _was_speaking = False
+                        with self._speaking_lock:
+                            self._is_speaking = False
+                        if not self.ui.muted:
+                            self.ui.set_state("LISTENING")
         except Exception as e:
             print(f"[JARVIS] ❌ Play: {e}")
             raise
         finally:
-            self.set_speaking(False)
+            with self._speaking_lock:
+                self._is_speaking = False
+            if not self.ui.muted:
+                self.ui.set_state("LISTENING")
             stream.stop()
             stream.close()
 
@@ -785,7 +804,7 @@ class JarvisLive:
                     self.session        = session
                     self._loop          = asyncio.get_event_loop()
                     self.audio_in_queue = asyncio.Queue()
-                    self.out_queue      = asyncio.Queue(maxsize=10)
+                    self.out_queue      = asyncio.Queue(maxsize=200)
 
                     print("[JARVIS] ✅ Connected.")
                     self.ui.set_state("LISTENING")
@@ -823,3 +842,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
+    
