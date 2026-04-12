@@ -759,7 +759,7 @@ class JarvisLive:
             while True:
                 try:
                     # Wait 0.4 s for a chunk; if none arrives, the burst is over
-                    chunk = await asyncio.wait_for(self.audio_in_queue.get(), timeout=0.4)
+                    chunk = await asyncio.wait_for(self.audio_in_queue.get(), timeout=0.1)
                     if not _was_speaking:
                         self.ui.set_state("SPEAKING")
                         with self._speaking_lock:
